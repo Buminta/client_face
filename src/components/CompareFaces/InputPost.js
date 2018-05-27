@@ -24,7 +24,6 @@ export default class InputPost extends React.Component{
     console.log(subscribeLink);
     let stompClient = window.Stomp.over(socket);
     console.log(stompClient);
-    console.log("day tao day");
     stompClient.connect({}, (frame)=> {
       /* setConnected(true); */
       console.log('Connected: ' + frame);
@@ -53,13 +52,20 @@ export default class InputPost extends React.Component{
     reader.readAsDataURL(file)
     reader.onload = () => {
       this.setState({passport: reader.result})
+      if(this.state.photo){
+        this.handleSubmit()
+      }
     }
   }
   
-  handlePhoto(file){
+  async handlePhoto(file){
 
     if(typeof file === "string" && file.startsWith("data") && file.includes("base64")){
-      return this.setState({photo: file})
+      await this.setState({photo: file})
+      if(this.state.passport){
+        this.handleSubmit()
+      }
+      return
     }
     this.setState({error: null, photo: null})
     if(!file.type.includes("image")){
@@ -67,8 +73,11 @@ export default class InputPost extends React.Component{
     }
     let reader = new FileReader()
     reader.readAsDataURL(file)
-    reader.onload = () => {
-      this.setState({photo: reader.result})
+    reader.onload = async () => {
+      await this.setState({photo: reader.result})
+      if(this.state.passport){
+        this.handleSubmit()
+      }
     }
   }
   handleSubmit(){
@@ -86,7 +95,10 @@ export default class InputPost extends React.Component{
       <div>
         <div className="row">
           <div className="col">
-            <InputImage content="Tải lên hộ chiếu" handleFile={file => this.handlePassport(file)} />
+            <InputImage handleFile={file => this.handlePassport(file)}>
+              Hộ chiếu
+            </InputImage>
+            <br/>
             <div>Preview</div>
             <img src={this.state.passport || "assets/no-content.png"} alt="Ảnh hộ chiếu" width={320} height={280}/>
           </div>
@@ -95,8 +107,8 @@ export default class InputPost extends React.Component{
           </div>
         </div>
         <br/>
-        <button className="btn btn-primary" onClick={() => this.handleSubmit()} disabled={this.props.handling || !this.props.ready}>Xử lí</button>
-        <br/>
+        {/* <button className="btn btn-primary" onClick={() => this.handleSubmit()} disabled={this.props.handling || !this.props.ready}>Xử lí</button>
+        <br/> */}
         {this.state.error &&
           <div style={{color: "red"}}>Error: {this.state.error}</div>
         }

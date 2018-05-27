@@ -11,8 +11,21 @@ export default class Passport extends React.Component{
   render(){
     return (
       <figure className="figure">
-        <img className="img-thumbnail"style={{maxWidth: "300px", maxHeight: "300px"}} src={`api/passports/${this.props._id}`} alt={this.props._id} width={350} height={350}/>
-        <figcaption className="figure-caption"><button className="btn btn-danger" disabled={this.state.deleting} onClick={() => this.onClickDelete()}>Delete</button></figcaption>
+        <img 
+          className="img-thumbnail"
+          style={{width: "180px", "height": "240px"}} 
+          src={`api/passports/${this.props._id}`} 
+          alt={this.props._id} 
+          width={180} 
+          height={240}/>
+        <figcaption className="figure-caption">
+          <button 
+            className="btn btn-danger" 
+            disabled={this.state.deleting} 
+            onClick={() => this.onClickDelete()}>
+            Delete
+          </button>
+        </figcaption>
       </figure>)
   }
 }

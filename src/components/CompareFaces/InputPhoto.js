@@ -22,7 +22,11 @@ export default class InputPhoto extends React.Component{
     if(this.state.input === 0)
     return (
       <div>
-        <InputImage content="Tải lên ảnh chụp" handleFile={file => this.props.handlePhoto(file)} /> 
+        <InputImage 
+          handleFile={file => this.props.handlePhoto(file)} > 
+          Ảnh chụp
+        </InputImage>
+        <br/>
         <div>Preview</div>
         <img src={this.props.photo || "assets/no-content.png"} alt="Ảnh chụp đối chiếu" width={320} height={280}/>
         <br/><br/>

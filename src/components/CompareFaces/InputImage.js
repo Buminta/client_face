@@ -1,30 +1,47 @@
 import React from 'react'
-import Dropzone from 'react-dropzone'
 import ImageCompressor from 'image-compressor.js'
 export default class InputImage extends React.Component{
-
-  onDrop(file){
-    // this.props.handleFile(file[0])
-    new ImageCompressor(file[0], {
+  constructor(props){
+    super(props)
+    this.inputFile = null
+  }
+  onUpload(){
+    let file
+    if(this.inputFile.files.length !== 0)
+      file = this.inputFile.files[0]
+    else
+      return;
+    if(file['type'].search("image") === -1)
+      return;
+    new ImageCompressor(file, {
       quality: .8,
       success: (result) => {
-        this.props.handleFile(file[0])
+        this.props.handleFile(file)
       } 
     })
   }
   render(){
-    const style = {
-      width : "150px",
-      height : "60px",
-      border : "1px dashed black",
-      borderRadius: "5px",
-      padding: "5px",
-      margin: "5px"
-    }
     return (
-      <Dropzone onDrop={(file) => this.onDrop(file)} multiple={false} style={style}>
-        {this.props.content}
-      </Dropzone>
+      <div
+        className={this.props.className}
+        style={this.props.style}
+      >
+        <button 
+          onClick={() => this.inputFile.click()}
+          className="btn btn-info"
+          
+        >
+          <div style={{display: "flex"}}>
+            <i className="material-icons md-18">file_upload</i>{' '}{this.props.children}
+          </div>
+        </button>
+        <input
+          ref={inputFile => this.inputFile=inputFile}
+          type="file" 
+          autoComplete="off" 
+          style={{display: "none"}}
+          onChange={this.onUpload.bind(this)}/>
+      </div>
     )
   }
 }

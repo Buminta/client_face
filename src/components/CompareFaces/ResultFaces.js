@@ -4,7 +4,7 @@ export default class ResultFaces extends React.Component{
   state = {
     passportFace: null
   }
-  componentWillMount(){
+  componentDidMount(){
     this.cropImage(this.props.passportImage, this.props.comparePassport.passportFaceLocation, (imageBase64) => {
       this.setState({passportFace: imageBase64})
     })
@@ -14,8 +14,12 @@ export default class ResultFaces extends React.Component{
   }
   distanceToRatio(distance){
     distance = Number(distance)
-    if(!distance) return distance
-    return (100/(1+64*(distance**8))).toFixed(2)
+    if(isNaN(distance)) return distance
+    let ratio = (100/(1+64*(distance**8)))
+    if(ratio > 80){
+      ratio = 90 + (ratio - 80)/2
+    }
+    return ratio.toFixed(1)
   }
   toBoxCrop(box){
     // list [top, right, bottom, left] to object (left, top, width, height)
@@ -26,6 +30,15 @@ export default class ResultFaces extends React.Component{
     let [top, right, bottom, left] = box
     let imgObject = new Image()
     imgObject.src = imageBase64
+    let scale = 0.2 
+    let widthOrig = right - left
+    let heightOrig = bottom - top
+    let imgWidth = imgObject.width
+    let imgHeight = imgObject.height
+    top = Math.max(top - (scale * heightOrig), 0)
+    bottom = Math.min((bottom + (scale * heightOrig)), imgHeight)
+    left = Math.max(left - (scale * widthOrig), 0)
+    right = Math.min(right + (scale * widthOrig), imgWidth)
     //set up canvas for thumbnail
     var canvas = document.createElement('canvas')
     var ctx = canvas.getContext('2d')
@@ -38,19 +51,33 @@ export default class ResultFaces extends React.Component{
   }
   render(){
     let resultDB = null
-    if(this.props.compareDB){
-      let halfFirst = this.props.compareDB.slice(0, 5)
-      let halfLast = this.props.compareDB.slice(5)
+    let { compareDB } = this.props
+    if(compareDB){
+      compareDB.sort((a,b) => a.distance - b.distance)
+      let halfFirst = compareDB.slice(0, 5)
+      let halfLast = compareDB.slice(5)
+      let attrImage = {
+        style: {height: "140px", width: "105px"},
+        className: "img-thumbnail",
+      }
       resultDB = 
       <div>
         <h4>So sánh với CSDL tội phạm</h4>
-        <div>10 đối tượng có khuôn mặt giống nhất. Thời gian: {((this.props.time.db - this.props.time.start)/1000).toFixed(3)}s</div>
+        <div>
+          10 đối tượng có khuôn mặt giống nhất. Thời gian: {((this.props.time.db - this.props.time.start)/1000).toFixed(3)}s
+        </div>
         <div className="row">
           {halfFirst.map(data => 
           <div key={data._id} className="col">
             <figure className="figure text-center">
-              <img style={{height: "100px"}} src={`/api/passports/${data._id}`} alt="Ảnh tội phạm gần giống nhất" className="img-thumbnail" />
-              <figcaption className="figure-caption text-center">Giống nhau: {this.distanceToRatio(data.distance)}%</figcaption>
+              <img 
+                {...attrImage}
+                alt="Ảnh tội phạm gần giống nhất"
+                src={`/api/passports/${data._id}`}
+              />
+              <figcaption className="figure-caption text-center">
+                Giống nhau: {this.distanceToRatio(data.distance)}%
+              </figcaption>
             </figure>
           </div>)}
         </div>
@@ -58,33 +85,59 @@ export default class ResultFaces extends React.Component{
           {halfLast.map(data => 
           <div key={data._id} className="col">
             <figure className="figure text-center">
-              <img style={{height: "100px"}} src={`/api/passports/${data._id}`} alt="Ảnh tội phạm gần giống nhất" className="img-thumbnail" />
-              <figcaption className="figure-caption text-center">Giống nhau: {this.distanceToRatio(data.distance)}%</figcaption>
+              <img 
+                {...attrImage}
+                alt="Ảnh tội phạm gần giống nhất"
+                src={`/api/passports/${data._id}`} 
+              />
+              <figcaption className="figure-caption text-center">
+                Giống nhau: {this.distanceToRatio(data.distance)}%
+              </figcaption>
             </figure>
           </div>)}
         </div>
       </div>
+    }
+    let faceImageSize = {
+      height: "160px",
+      width: "120px"
     }
     return(
       <div>
         <div className="row">
           <div className="col">
             <figure className="figure text-center">
-              <img src={this.state.passportFace} alt="Ảnh khuôn mặt bóc ra từ hộ chiếu"  width="120" height="160"/>
-              <figcaption className="figure-caption text-center">Ảnh khuôn mặt bóc ra từ hộ chiếu</figcaption>
+              <img 
+                src={this.state.passportFace} 
+                alt="Ảnh khuôn mặt bóc ra từ hộ chiếu"  
+                {...faceImageSize}
+              />
+              <figcaption className="figure-caption text-center">
+                Ảnh khuôn mặt bóc ra từ hộ chiếu
+              </figcaption>
             </figure>
           </div>
           <div className="col">
             <figure className="figure text-center">
-              <img src={this.state.photoFace} alt="Ảnh khuôn mặt bóc ra từ ảnh chụp" width="120" height="160"/>
-              <figcaption className="figure-caption text-center">Ảnh khuôn mặt bóc ra từ ảnh chụp</figcaption>
+              <img 
+                src={this.state.photoFace} 
+                alt="Ảnh khuôn mặt bóc ra từ ảnh chụp" 
+                {...faceImageSize}
+              />
+              <figcaption className="figure-caption text-center">
+                Ảnh khuôn mặt bóc ra từ ảnh chụp
+              </figcaption>
             </figure>
           </div>
 
           <div className="col-6">
             <h5>Kết quả nhận diện</h5>
-            <div>Giống nhau: {this.distanceToRatio(this.props.comparePassport.distance)}%</div>
-            <div>Thời gian: {((this.props.time.passport - this.props.time.start)/1000).toFixed(3)}s</div>
+            <div>
+              Giống nhau: {this.distanceToRatio(this.props.comparePassport.distance)}%
+            </div>
+            <div>
+              Thời gian: {((this.props.time.passport - this.props.time.start)/1000).toFixed(3)}s
+            </div>
           </div>
         </div>
 
